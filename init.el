@@ -102,6 +102,7 @@
 (require 'init-haskell)
 (require 'init-elm)
 (require 'init-purescript)
+(require 'init-rtags)
 (require 'init-ruby)
 (require 'init-rails)
 (require 'init-sql)

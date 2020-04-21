@@ -32,11 +32,15 @@
       (after-load 'python
         (push 'company-anaconda company-backends)))))
 
-(when (maybe-require-package 'toml-mode)
-  (add-to-list 'auto-mode-alist '("poetry\\.lock\\'" . toml-mode)))
+;; (when (maybe-require-package 'toml-mode)
+;;   (add-to-list 'auto-mode-alist '("poetry\\.lock\\'" . toml-mode)))
 
-(when (maybe-require-package 'reformatter)
-  (reformatter-define black :program "black"))
+;; (when (maybe-require-package 'reformatter)
+;;   (reformatter-define black :program "black"))
+
+;; every time you save your Python file yapf will be executed on the current buffer.
+(require-package 'py-yapf)
+(add-hook 'python-mode-hook 'py-yapf-enable-on-save)
 
 (provide 'init-python)
 ;;; init-python.el ends here
