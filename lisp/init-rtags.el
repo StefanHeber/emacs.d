@@ -1,3 +1,7 @@
+;;; init-rtags.el --- Support for the rtags -*- lexical-binding: t -*-
+;;; Commentary:
+;;; Code:
+
 ;; ensure that we use only rtags checking
 ;; https://github.com/Andersbakken/rtags#optional-1
 (defun setup-flycheck-rtags ()

@@ -10,6 +10,9 @@
   (setq mac-option-key-is-meta t)
   (setq mac-option-modifier 'meta)
 
+  ;; unset this to write umlauts ü,ä
+  (setq mac-right-option-modifier nil)
+
   ;; (setq mac-command-modifier 'meta)
   ;; (setq mac-option-modifier 'none)
   ;; Make mouse wheel / trackpad scrolling less jerky
