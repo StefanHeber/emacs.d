@@ -16,6 +16,9 @@
   (global-hungry-delete-mode))
 ;; note M-x delete-trailing-whitespace will delete all trailing whitespace in the buffer.
 
+;; remove trailing whitespace from the entire buffer before saving the file
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -198,15 +201,15 @@
 ;;;; org
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (use-package org-bullets
-;;              :ensure t
-;;              :init (add-hook 'org-mode-hook 'org-bullets-mode))
 (require-package 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 ;; Automatically wrapping when you get to the end of a line
 ;; note: this is not always a good idea (tables)
 (add-hook 'org-mode-hook (lambda () (setq truncate-lines nil)))
+
+;; turn on flyspell in org mode
+(add-hook 'org-mode-hook 'turn-on-flyspell)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; all-the-icons
