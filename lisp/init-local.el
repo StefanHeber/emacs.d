@@ -56,18 +56,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; dont indent the braces
-(setq c-default-style "linux"
-      c-basic-offset 3)
+;; (setq c-default-style "linux"
+;;       c-basic-offset 3)
 
 ;; add cuda syntax highlighting
 (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.cuh\\'" . c++-mode))
 
 ;; add regular c++ files for syntaxhiglighting
-;;(add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
-;;(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-;;(add-to-list 'auto-mode-alist '("\\.cpp\\'" . c++-mode))
-;;(add-to-list 'auto-mode-alist '("\\.c\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.cpp\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.c\\'" . c++-mode))
 
 ;; add template file highlighting
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
@@ -135,13 +135,13 @@
           treemacs-collapse-dirs              3
           treemacs-silent-refresh             nil
           treemacs-change-root-without-asking nil
-          treemacs-sorting                    'alphabetic-desc
+          treemacs-sorting                    'alphabetic-asc
           treemacs-show-hidden-files          t
           treemacs-never-persist              nil
           treemacs-is-never-other-window      nil
           treemacs-goto-tag-strategy          'refetch-index)
 
-    (treemacs-resize-icons 44)
+    (treemacs-resize-icons 22)
     (treemacs-follow-mode t)
     (treemacs-filewatch-mode t))
   :bind
