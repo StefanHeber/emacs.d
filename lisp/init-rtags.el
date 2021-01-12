@@ -11,6 +11,9 @@
   (setq-local flycheck-highlighting-mode nil)
   (setq-local flycheck-check-syntax-automatically nil))
 
+;;
+(require-package 'rtags)
+
 ;; only run this if rtags is installed
 (when (require 'rtags nil :noerror)
   ;; make sure you have company-mode installed

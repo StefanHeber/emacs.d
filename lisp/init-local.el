@@ -72,6 +72,17 @@
 ;; add template file highlighting
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
 
+;; clang-format
+;; you need to first install clang-format using apt install
+(require 'clang-format)
+
+;; This will search for a .clang-format file in your project root folder.
+;; You can create a config file e.g. using the following command:
+;; clang-format -style=llvm -dump-config > .clang-format
+(setq clang-format-style "file")
+;; In case there is no config file clang should use the following fallback
+(setq clang-format-fallback-style "llvm")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; latex-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -234,5 +245,12 @@
 
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Fix to overwrite the 'use-package' theme
+;; cf init-themes.el
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(add-hook 'after-init-hook (lambda () (load-theme 'sanityinc-tomorrow-bright)))
+(setq-default custom-enabled-themes '(sanityinc-tomorrow-bright))
 
 (provide 'init-local)

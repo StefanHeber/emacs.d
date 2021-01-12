@@ -24,28 +24,24 @@
 ;;----------------------------------------------------------------------------
 ;; Window size and features
 ;;----------------------------------------------------------------------------
+(setq-default
+ window-resize-pixelwise t
+ frame-resize-pixelwise t)
+
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))
 (when (fboundp 'set-scroll-bar-mode)
   (set-scroll-bar-mode nil))
 
-;; I generally prefer to hide the menu bar, but doing this on OS X
-;; simply makes it update unreliably in GUI frames, so we make an
-;; exception.
-(if *is-a-mac*
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (unless (display-graphic-p frame)
-                  (set-frame-parameter frame 'menu-bar-lines 0))))
-  (when (fboundp 'menu-bar-mode)
-    (menu-bar-mode -1)))
+(menu-bar-mode -1)
 
 (let ((no-border '(internal-border-width . 0)))
   (add-to-list 'default-frame-alist no-border)
   (add-to-list 'initial-frame-alist no-border)
-  (add-to-list 'default-frame-alist '(width  . 103))
-  (add-to-list 'default-frame-alist '(height . 62))
-  (add-to-list 'default-frame-alist '(font . "Menlo-14")))
+  ;; (add-to-list 'default-frame-alist '(width  . 103))
+  ;; (add-to-list 'default-frame-alist '(height . 62))
+  (add-to-list 'default-frame-alist '(font . "Menlo-12"))
+  )
 
 (defun sanityinc/adjust-opacity (frame incr)
   "Adjust the background opacity of FRAME by increment INCR."

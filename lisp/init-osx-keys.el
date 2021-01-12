@@ -25,7 +25,7 @@
   (global-set-key (kbd "<mac-command-modifier>-`") 'ns-next-frame)
   (global-set-key (kbd "<mac-command-modifier>-h") 'ns-do-hide-emacs)
   (global-set-key (kbd "<mac-command-modifier>-˙") 'ns-do-hide-others)
-  (after-load 'nxml-mode
+  (with-eval-after-load 'nxml-mode
     (define-key nxml-mode-map (kbd "M-h") nil))
   (global-set-key (kbd "<mac-command-modifier>-ˍ") 'ns-do-hide-others) ;; what describe-key reports for cmd-option-h
   )
