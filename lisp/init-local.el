@@ -19,6 +19,13 @@
 ;; remove trailing whitespace from the entire buffer before saving the file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+;; smooth scrolling
+(setq redisplay-dont-pause t
+      scroll-margin 1
+      scroll-step 1
+      scroll-conservatively 10000
+      scroll-preserve-screen-position 1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,6 +97,10 @@
 ;; (add-hook 'c++-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
+
+(use-package cmake-mode
+  :ensure t
+  :mode "CMakeLists.txt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; latex-mode
