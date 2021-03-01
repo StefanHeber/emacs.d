@@ -20,11 +20,14 @@
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;; smooth scrolling
-(setq redisplay-dont-pause t
-      scroll-margin 1
-      scroll-step 1
-      scroll-conservatively 10000
-      scroll-preserve-screen-position 1)
+(setq
+ ;;redisplay-dont-pause t
+ scroll-margin 0
+ scroll-up-aggressively 0.1
+ scroll-down-aggressively 0.1
+ ;;scroll-step 1
+ scroll-conservatively 1
+ scroll-preserve-screen-position t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
@@ -58,6 +61,22 @@
 
 (add-to-list 'auto-mode-alist '("\\.pyx\\'" . python-mode))
 
+(use-package pyenv-mode
+  :ensure t
+  :config
+  (defun projectile-pyenv-mode-set ()
+    "Set pyenv version matching project name."
+    (let ((project (projectile-project-name)))
+      (if (member project (pyenv-mode-versions))
+          (pyenv-mode-set project)
+        (pyenv-mode-unset))))
+
+  (add-hook 'projectile-switch-project-hook 'projectile-pyenv-mode-set)
+  (add-hook 'python-mode-hook 'pyenv-mode))
+
+;; automatically activate a pyenv environment based on .python-version file
+(use-package pyenv-mode-auto
+  :ensure t)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; c++-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,6 +120,9 @@
 (use-package cmake-mode
   :ensure t
   :mode "CMakeLists.txt")
+
+;; not working [fix later]
+;;(require 'init-iwyu)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; latex-mode
