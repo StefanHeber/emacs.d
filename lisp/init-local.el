@@ -20,14 +20,18 @@
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;; smooth scrolling
-(setq
- ;;redisplay-dont-pause t
- scroll-margin 0
- scroll-up-aggressively 0.1
- scroll-down-aggressively 0.1
- ;;scroll-step 1
- scroll-conservatively 1
- scroll-preserve-screen-position t)
+;; (setq
+;;  ;;redisplay-dont-pause t
+;;  scroll-margin 0
+;;  scroll-up-aggressively 0.1
+;;  scroll-down-aggressively 0.1
+;;  ;;scroll-step 1
+;;  scroll-conservatively 1
+;;  scroll-preserve-screen-position t)
+
+;; (require 'sublimity)
+;; (require 'sublimity-scroll)
+;; (sublimity-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
@@ -102,6 +106,7 @@
 ;; you need to first install clang-format using apt install
 (require 'clang-format)
 (global-set-key [C-M-tab] 'clang-format-region)
+;; (load "/usr/share/emacs/site-lisp/clang-format-10/clang-format.el")
 ;; This will search for a .clang-format file in your project root folder.
 ;; You can create a config file e.g. using the following command:
 ;; clang-format -style=llvm -dump-config > .clang-format
