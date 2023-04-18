@@ -41,9 +41,6 @@
 
   (js2-imenu-extras-setup))
 
-;; In Emacs >= 25, the following is an alias for js-indent-level anyway
-(setq-default js2-basic-offset 2)
-
 (add-to-list 'interpreter-mode-alist (cons "node" 'js2-mode))
 
 (with-eval-after-load 'js2-mode
@@ -76,9 +73,8 @@
   (when (fboundp 'coffee-mode)
     (add-to-list 'auto-mode-alist '("\\.coffee\\.erb\\'" . coffee-mode))))
 
-;; ---------------------------------------------------------------------------
+
 ;; Run and interact with an inferior JS via js-comint.el
-;; ---------------------------------------------------------------------------
 
 (when (maybe-require-package 'js-comint)
   (setq js-comint-program-command "node")
@@ -89,14 +85,13 @@
 
   (define-minor-mode inferior-js-keys-mode
     "Bindings for communicating with an inferior js interpreter."
-    nil " InfJS" inferior-js-minor-mode-map)
+    :init-value nil :lighter " InfJS" :keymap inferior-js-minor-mode-map)
 
   (dolist (hook '(js2-mode-hook js-mode-hook))
     (add-hook hook 'inferior-js-keys-mode)))
 
-;; ---------------------------------------------------------------------------
+
 ;; Alternatively, use skewer-mode
-;; ---------------------------------------------------------------------------
 
 (when (maybe-require-package 'skewer-mode)
   (with-eval-after-load 'skewer-mode

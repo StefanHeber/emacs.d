@@ -2,28 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
+(with-eval-after-load 'eglot
+  (put 'tuareg-mode 'eglot-language-id "ocaml")
+  (add-to-list 'eglot-server-programs '((tuareg-mode) . ("ocamllsp")) t))
+
 (when (maybe-require-package 'tuareg)
-  (when (maybe-require-package 'merlin)
-    (autoload 'merlin-mode "merlin" "Merlin mode" t)
-    (add-hook 'tuareg-mode-hook 'merlin-mode)
-
-    (with-eval-after-load 'merlin
-      (add-hook 'merlin-mode-hook
-                (lambda ()
-                  (if merlin-mode
-                      (add-hook 'xref-backend-functions 'merlin-xref-backend nil t)
-                    (remove-hook 'xref-backend-functions 'merlin-xref-backend t))))
-      (with-eval-after-load 'company
-        (push 'merlin-company-backend company-backends)))
-
-    (when (maybe-require-package 'merlin-eldoc)
-      (with-eval-after-load 'merlin
-        (autoload 'merlin-eldoc--gather-info "merlin-eldoc")
-        (add-hook 'merlin-mode-hook
-                  (lambda ()
-                    (setq-local eldoc-documentation-function
-                                #'merlin-eldoc--gather-info))))))
-
   (with-eval-after-load 'tuareg
     (defvar-local tuareg-previous-tuareg-buffer nil
       "Buffer from which we jumped to the REPL.")
@@ -45,6 +28,10 @@
     (define-key tuareg-mode-map (kbd "C-c C-z") 'sanityinc/tuareg-repl-switch)
     (define-key tuareg-interactive-mode-map (kbd "C-c C-z") 'sanityinc/tuareg-repl-switch-back)))
 
+(when (maybe-require-package 'dune)
+  (maybe-require-package 'dune-format))
+
+;; Add my own lightweight ocp-indent reformatter, instead of the clunky upstream package
 (when (maybe-require-package 'reformatter)
   (defcustom ocp-indent-args nil
     "Arguments for \"ocp-indent\" invocation.")

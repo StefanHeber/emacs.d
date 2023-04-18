@@ -57,10 +57,7 @@
 ;;; Robe
 (when (maybe-require-package 'robe)
   (with-eval-after-load 'ruby-mode
-    (add-hook 'ruby-mode-hook 'robe-mode))
-  (with-eval-after-load 'robe
-    (with-eval-after-load 'company
-      (add-to-list 'company-backends 'company-robe))))
+    (add-hook 'ruby-mode-hook 'robe-mode)))
 
 
 
@@ -108,9 +105,8 @@
   (mmm-add-mode-ext-class mode "\\.js\\.erb\\'" 'erb))
 
 
-;;----------------------------------------------------------------------------
+
 ;; Ruby - my convention for heredocs containing SQL
-;;----------------------------------------------------------------------------
 
 ;; (require-package 'mmm-mode)
 ;; (eval-after-load 'mmm-mode
