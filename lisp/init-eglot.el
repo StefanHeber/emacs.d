@@ -7,6 +7,8 @@
 ;; For Emacs >= 27
 (setq read-process-output-max (* 1024 1024))
 
+;; eglot bug??
+(require 'text-property-search)
 
 (when (maybe-require-package 'eglot)
   (maybe-require-package 'consult-eglot))
