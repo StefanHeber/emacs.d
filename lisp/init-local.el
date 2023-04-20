@@ -47,10 +47,10 @@
 ;;;; undo
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package undo-tree
-  :ensure t
-  :init
-  (global-undo-tree-mode))
+;; (use-package undo-tree
+;;   :ensure t
+;;   :init
+;;   (global-undo-tree-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; python-mode
@@ -128,6 +128,11 @@
 
 ;; not working [fix later]
 ;;(require 'init-iwyu)
+
+;; switch from source file to header file or vice versa
+(add-hook 'c-mode-common-hook
+  (lambda() 
+    (local-set-key  (kbd "C-c o") 'ff-find-other-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; latex-mode
@@ -308,5 +313,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(add-hook 'after-init-hook (lambda () (load-theme 'sanityinc-tomorrow-bright)))
 ;;(setq-default custom-enabled-themes '(sanityinc-tomorrow-bright))
+
+
+;; add TODO highlighting
+(use-package hl-todo
+    :hook (prog-mode . hl-todo-mode)
+    :config
+    (setq hl-todo-highlight-punctuation ":"
+          hl-todo-keyword-faces
+          `(("TODO"       warning bold)
+            ("FIXME"      error bold)
+            ("HACK"       font-lock-constant-face bold)
+            ("REVIEW"     font-lock-keyword-face bold)
+            ("NOTE"       success bold)
+            ("DEPRECATED" font-lock-doc-face bold))))
+
+
 
 (provide 'init-local)
