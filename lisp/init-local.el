@@ -78,9 +78,10 @@
   (add-hook 'projectile-switch-project-hook 'projectile-pyenv-mode-set)
   (add-hook 'python-mode-hook 'pyenv-mode))
 
-;; automatically activate a pyenv environment based on .python-version file
-(use-package pyenv-mode-auto
-  :ensure t)
+;; automatically activate a pyenv environment based on .python-version file (not available anymore)
+;; (use-package pyenv-mode-auto
+;; :ensure t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; c++-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
