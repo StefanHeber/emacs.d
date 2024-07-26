@@ -5,6 +5,13 @@
 (require-package 'color-theme-sanityinc-solarized)
 (require-package 'color-theme-sanityinc-tomorrow)
 
+;; Install doom-themes if not already installed
+(unless (package-installed-p 'doom-themes)
+  (package-install 'doom-themes))
+
+;; Load doom-themes
+(require 'doom-themes)
+
 ;; Don't prompt to confirm theme safety. This avoids problems with
 ;; first-time startup on Emacs > 26.3.
 (setq custom-safe-themes t)
