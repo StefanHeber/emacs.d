@@ -6,9 +6,6 @@
 (when *is-a-mac*
   (define-key key-translation-map (kbd "<S-mouse-1>") (kbd "<mouse-2>")))
 
-;; Highlights the current cursor line
-(global-hl-line-mode t)
-
 ;; deletes all the whitespace when you hit backspace or delete
 (use-package hungry-delete
   :ensure t
@@ -18,20 +15,6 @@
 
 ;; remove trailing whitespace from the entire buffer before saving the file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;; smooth scrolling
-;; (setq
-;;  ;;redisplay-dont-pause t
-;;  scroll-margin 0
-;;  scroll-up-aggressively 0.1
-;;  scroll-down-aggressively 0.1
-;;  ;;scroll-step 1
-;;  scroll-conservatively 1
-;;  scroll-preserve-screen-position t)
-
-;; (require 'sublimity)
-;; (require 'sublimity-scroll)
-;; (sublimity-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
@@ -51,6 +34,14 @@
 ;;   :ensure t
 ;;   :init
 ;;   (global-undo-tree-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; eldoc
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq eldoc-idle-delay 0.1
+      eldoc-echo-area-prefer-doc-buffer  t ; Prefer displaying doc in separate buffer
+      eldoc-echo-area-use-multiline-p nil)  ; 1 line max to display in the echo area
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; python-mode
@@ -78,9 +69,17 @@
   (add-hook 'projectile-switch-project-hook 'projectile-pyenv-mode-set)
   (add-hook 'python-mode-hook 'pyenv-mode))
 
-;; automatically activate a pyenv environment based on .python-version file (not available anymore)
-;; (use-package pyenv-mode-auto
-;; :ensure t)
+;; this package doesn't show guides on blank lines
+;; (use-package highlight-indent-guides
+;;   :ensure t
+;;   :hook (python-ts-mode . highlight-indent-guides-mode)
+;;   :config
+;;   (setq highlight-indent-guides-auto-enabled nil)
+;;   (set-face-background 'highlight-indent-guides-odd-face "darkgray")
+;;   (set-face-background 'highlight-indent-guides-even-face "dimgray")
+;;   (set-face-foreground 'highlight-indent-guides-character-face "dimgray")
+;;   (setq highlight-indent-guides-method 'character)
+;;   (setq highlight-indent-guides-responsive 'top))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; c++-mode
@@ -116,6 +115,7 @@
 (setq clang-format-fallback-style "llvm")
 ;;(setq clang-format-fallback-style "Google")
 
+
 ;; (add-hook 'c-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
@@ -132,7 +132,7 @@
 
 ;; switch from source file to header file or vice versa
 (add-hook 'c-mode-common-hook
-  (lambda() 
+  (lambda()
     (local-set-key  (kbd "C-c o") 'ff-find-other-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
