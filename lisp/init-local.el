@@ -19,6 +19,24 @@
 (setq-default tab-width 4) ;; set the tab width
 (setq-default indent-tabs-mode nil)  ;; Use spaces instead of tabs for indentation
 
+;; folding extension
+(use-package yafolding
+  :ensure t
+  :hook
+  (yaml-mode . yafolding-mode)
+  (yaml-ts-mode . yafolding-mode)
+  (prog-mode . yafolding-mode))
+
+;; TODO test later
+;; (use-package buffer-move
+;;   :defer t
+;;   :bind (("M-S-<up>" . buf-move-up)
+;;          ("M-S-<down>" . buf-move-down)
+;;          ("M-S-<left>" . buf-move-left)
+;;          ("M-S-<right>" . buf-move-right))
+;;   )
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,31 +64,144 @@
       eldoc-echo-area-prefer-doc-buffer  t ; Prefer displaying doc in separate buffer
       eldoc-echo-area-use-multiline-p nil)  ; 1 line max to display in the echo area
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; yasnippet
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package yasnippet
+  :ensure t
+  :config
+  ;; Automatically set `yas-snippet-dirs`
+  (setq yas-snippet-dirs
+        (append
+         '("~/.emacs.d/snippets")  ;; Your custom snippets directory
+         (when-let ((snippets-dir
+                     (car (file-expand-wildcards "~/.emacs.d/elpa/yasnippet-snippets-*/snippets"))))
+           (list snippets-dir))))  ;; Automatically find `yasnippet-snippets`
+  (yas-global-mode 1))  ;; Enable globally
+
+
+(use-package yasnippet-snippets
+  :ensure t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; python-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; set 4-space indent for python
-(add-hook 'python-mode-hook
+(add-hook 'python-ts-mode-hook
           (lambda ()
             (setq indent-tabs-mode nil)
             (setq tab-width 4)
-            (setq python-indent 4)))
+            (setq python-indent 4)
+            ;; Customize Tree-sitter highlights
+            (setq treesit-font-lock-level 3) ;; Highlighting level
+            )
+          )
 
 (add-to-list 'auto-mode-alist '("\\.pyx\\'" . python-mode))
 
-(use-package pyenv-mode
+(use-package conda
+  :ensure t
+  :init
+  (setq conda-anaconda-home (expand-file-name "~/.conda"))
+  (setq conda-env-home-directory (expand-file-name "~/.conda/envs"))
+  ;; Optionally enable automatic activation when entering a directory with .conda-env
+  (setq conda-env-autoactivate-mode t))
+
+;; to use pyvenv-activate for local venvs
+(use-package pyvenv
   :ensure t
   :config
-  (defun projectile-pyenv-mode-set ()
-    "Set pyenv version matching project name."
-    (let ((project (projectile-project-name)))
-      (if (member project (pyenv-mode-versions))
-          (pyenv-mode-set project)
-        (pyenv-mode-unset))))
+  (pyvenv-mode 1)
+  ;; (pyvenv-tracking-mode 1)   ;; Enable mode tracking to show venv in mode line
+  )
 
-  (add-hook 'projectile-switch-project-hook 'projectile-pyenv-mode-set)
-  (add-hook 'python-mode-hook 'pyenv-mode))
+;; taken from https://codeberg.org/haditim/dotemacs/src/branch/master/modules/programming-languages/my-python.el
+;; allows to use virtualenvs with all settings
+(defun my/reset-python-env ()
+  "Resets the env set by my/custom-python-env."
+  (when (and (boundp 'orig-exec-path)
+             (boundp 'orig-python-interpreter)
+             (boundp 'orig-python-shell-interpreter))
+    (setq exec-path orig-exec-path
+          python-interpreter orig-python-interpreter
+          python-shell-interpreter orig-python-shell-interpreter)
+    (setenv "PATH" (mapconcat 'identity exec-path ":"))
+    (setenv "VIRTUAL_ENV" orig-python-interpreter)
+    (setenv "PYTHON_HOME" nil)))
+
+(defun my/custom-python-env ()
+  "Set custom shell and env for python (e.g. over Tramp with Conda).
+This removes the `poetry' and `pyvenv' dependencies for me."
+  (interactive)
+  (require 'tramp)
+  (let* ((env (expand-file-name (read-directory-name "Python env: ")))
+         (bin (concat (expand-file-name (tramp-file-local-name (file-name-as-directory env))) "bin"))
+         (interpreter (concat (file-name-as-directory bin) "python"))
+         (virt-name (if (tramp-tramp-file-p env)
+                        (concat (file-name-nondirectory
+                                 (directory-file-name env)) "/t")
+                      (file-name-nondirectory
+                       (directory-file-name env)))))
+    ;; Set original values for later retrieval
+    (setq orig-exec-path exec-path
+          orig-python-interpreter python-interpreter
+          orig-python-shell-interpreter python-shell-interpreter)
+    (setq python-interpreter interpreter
+          python-shell-interpreter interpreter
+          python-shell-virtualenv-root interpreter
+          python-shell-virtualenv-path interpreter
+          my/venv-name virt-name
+          my/venv-address env)
+    (add-to-list 'exec-path bin)
+    (tramp-cleanup-this-connection)
+    (add-to-list 'tramp-remote-path bin)
+    (setenv "PATH" (mapconcat 'identity exec-path ":"))
+    (setenv "VIRTUAL_ENV" interpreter)
+    (setenv "PYTHON_HOME" nil)
+    (message "env: %s\nbin: %s\ninterpreter: %s\nCurrent $PATH: %s\nCurrent $VIRTUAL_ENV: %s"
+             env bin interpreter (getenv "PATH")(getenv "VIRTUAL_ENV"))))
+
+(define-minor-mode my/python-venv-mode
+  "Python venv mode showing info on the modeline"
+  :init-value nil
+  :global nil
+  :lighter " my/pv"
+  (if (not my/python-venv-mode)
+      (my/reset-python-env)
+    (my/custom-python-env)
+    (add-to-list 'mode-line-misc-info '(my/python-venv-mode (" V:" my/venv-name " ")))))
+
+;; (defun my/activate-project-venv ()
+;;   "Automatically activate a venv based on the project root."
+;;   (when (eq major-mode 'python-mode) ; Only do this for Python files
+;;     (let* ((project-root (projectile-project-root))
+;;            (venv-path (concat project-root ".venv")))
+;;       (when (and project-root (file-directory-p venv-path))
+;;         (pyvenv-activate venv-path)))))
+
+;; ;; Add the function to the buffer switch hook
+;; (add-hook 'buffer-list-update-hook 'my/activate-project-venv)
+
+;; (require 'flymake-ruff)
+;; (add-hook 'python-mode-hook #'flymake-ruff-load)
+;; (use-package flymake-ruff
+;;   :ensure t)
+
+;; (use-package pyenv-mode
+;;   :ensure t
+;;   :config
+;;   (defun projectile-pyenv-mode-set ()
+;;     "Set pyenv version matching project name."
+;;     (let ((project (projectile-project-name)))
+;;       (if (member project (pyenv-mode-versions))
+;;           (pyenv-mode-set project)
+;;         (pyenv-mode-unset))))
+
+;;   (add-hook 'projectile-switch-project-hook 'projectile-pyenv-mode-set)
+;;   (add-hook 'python-mode-hook 'pyenv-mode))
 
 ;; this package doesn't show guides on blank lines
 ;; (use-package highlight-indent-guides
@@ -84,12 +215,187 @@
 ;;   (setq highlight-indent-guides-method 'character)
 ;;   (setq highlight-indent-guides-responsive 'top))
 
+
+;; (use-package dap-mode
+;;   :ensure t
+;;   :config
+;;   (dap-auto-configure-mode))
+
+;; (add-hook 'python-mode-hook
+;;           (lambda ()
+;;             (when (bound-and-true-p dap-mode)
+;;               (setq dap-python-executable
+;;                     (expand-file-name ".venv/bin/python" (projectile-project-root))))))
+
+(use-package dape
+  :ensure t
+  :preface
+  ;; By default dape shares the same keybinding prefix as `gud'
+  ;; If you do not want to use any prefix, set it to nil.
+  ;; (setq dape-key-prefix "\C-x\C-a")
+
+  :hook
+  ;; Save breakpoints on quit
+  ((kill-emacs . dape-breakpoint-save)
+   ;; Load breakpoints on startup
+   (after-init . dape-breakpoint-load))
+
+  :config
+  ;; Turn on global bindings for setting breakpoints with mouse
+  (dape-breakpoint-global-mode)
+
+  ;; Info buffers to the right
+  (setq dape-buffer-window-arrangement 'right)
+
+  ;; Info buffers like gud (gdb-mi)
+  ;; (setq dape-buffer-window-arrangement 'gud)
+  ;; (setq dape-info-hide-mode-line nil)
+
+  ;; Pulse source line (performance hit)
+  (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+
+  ;; Showing inlay hints
+  (setq dape-inlay-hints t)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
+
+  ;; Kill compile buffer on build success
+  (add-hook 'dape-compile-hook 'kill-buffer)
+
+  ;; Projectile users
+  (setq dape-cwd-fn 'projectile-project-root)
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; the following is taken from here:
+  ;; https://codeberg.org/haditim/dotemacs/src/branch/master/modules/programming-languages/my-python.el
+
+
+  ;; (defun my/append-to-visible-buffer (&optional buffer-name)
+  ;;     "Interactively append selected region to a visible buffer.
+  ;; Useful for sending selection to debugger, shell, etc."
+  ;;     (interactive)
+  ;;     (let* ((beg (if (region-active-p)
+  ;;                     (save-excursion (region-beginning))
+  ;;                   (save-excursion (beginning-of-line) (point))))
+  ;;            (end (if (region-active-p)
+  ;;                     (save-excursion (region-end))
+  ;;                   (save-excursion (end-of-line) (point))))
+  ;;            (text (buffer-substring beg end))
+  ;;            (buf (current-buffer))
+  ;;            (target-buffer (if (not buffer-name)
+  ;;                               (completing-read "Select buffer to append to: "
+  ;;                                                (mapcar 'buffer-name (mapcar 'window-buffer (window-list))))
+  ;;                             buffer-name))
+  ;;            (inhibit-read-only t))
+  ;;       (switch-to-buffer target-buffer)
+  ;;       (goto-char (point-max))
+  ;;       (insert (concat "\n" text))
+  ;;       (if
+  ;;           (derived-mode-p 'comint-mode)
+  ;;           (comint-send-input)
+  ;;         (insert "\n"))
+  ;;       (switch-to-buffer buf)))
+
+
+  ;;   (defun my/send-to-dape-repl ()
+  ;;     (interactive)
+  ;;     (my/append-to-visible-buffer "*dape-repl*"))
+
+
+
+  (setq dape-repl-use-shorthand t)
+
+  ;; (defun my/get-real-python-env-path ()
+  ;;   "Get real python env (Tramp and local) for dape"
+  ;;   (let ((env (if (boundp 'my/venv-address)
+  ;;                  my/venv-address
+  ;;                python-shell-virtualenv-root)))
+  ;;     (concat (file-name-as-directory env) "bin")))
+
+  ;; (defun my/debug-over-forwarded-port ()
+  ;;   "Use dape over a forwarded port with command `ssh -L 1234:localhost:1234 <server-address>'"
+  ;;   (interactive)
+  ;;   (let* ((selected-port (read-number "Forwarded port: " 1234))
+  ;;          (selected-port-str (number-to-string selected-port)))
+  ;;     (add-to-list 'dape-configs
+  ;;                  `(debugpy-file-remote-forwarded-port
+  ;;                    modes (python-mode python-ts-mode)
+  ;;                    command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
+  ;;                    command "python"
+  ;;                    command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
+  ;;                    port ,selected-port
+  ;;                    host "localhost"
+  ;;                    :program dape-buffer-default
+  ;;                    :request "launch"
+  ;;                    :type "python"
+  ;;                    :console "externalTerminal"
+  ;;                    :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+  ;;                    ))
+  ;;     (add-to-list 'dape-configs
+  ;;                  `(debugpy-module-remote-forwarded-port
+  ;;                    modes (python-mode python-ts-mode)
+  ;;                    command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
+  ;;                    command "python"
+  ;;                    command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
+  ;;                    port ,selected-port
+  ;;                    host "localhost"
+  ;;                    stderr (get-buffer-create "*dape adapter stderr*") ; Fix stderr here TODO
+  ;;                    :module nil
+  ;;                    :request "launch"
+  ;;                    :type "python"
+  ;;                    :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+  ;;                    :console "externalTerminal"
+  ;;                    :unittestEnabled t
+  ;;                    ))
+  ;;     )
+  ;;   (dape (dape--read-config)))
+
+  (add-to-list `dape-configs
+               '(debugpy-remote
+                 modes (python-mode python-ts-mode)
+                 command "python"
+                 command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" :autoport)
+                 port :autoport
+                 ;;command-insert-stderr nil
+                 :program dape-buffer-default
+                 :request "launch"
+                 :type "python"
+                 :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+                 :console "integratedTerminal"
+                 ))
+
+  (add-to-list `dape-configs
+               '(debugpy-remote-5678
+                 modes (python-mode python-ts-mode)
+                 command "python"
+                 command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" "5678")
+                 port 5678
+                 :program dape-buffer-default
+                 :request "launch"
+                 :type "python"
+                 :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+                 :console "integratedTerminal"
+                 ;;prefix-local "/docker:dads-playground:/repo/"
+                 ;;prefix-remote "/repo/"
+                 ))
+
+
+
+  )
+
+;; Enable repeat mode for more ergonomic `dape' use
+(use-package repeat
+  :ensure t
+  :config
+  (repeat-mode))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; c++-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; dont indent the braces
-;; (setq c-default-style "Linux"
+;; (setq c-default-style "linux"
 ;;       c-basic-offset 3)
 
 ;; sets c-ts-mode and c++-ts-mode when using c-mode or c++-mode
@@ -102,7 +408,7 @@
 (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.cuh\\'" . c++-mode))
 
-;; add regular c++ files for syntax higlighting
+;; add regular c++ files for syntaxhiglighting
 (add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.cpp\\'" . c++-mode))
@@ -112,7 +418,7 @@
 (add-to-list 'auto-mode-alist '("\\.tcc\\'" . c++-mode))
 
 ;; clang-format
-;; you need to first install clang-format using apt install
+;; NOTE: you need to first install clang-format using apt install
 (use-package clang-format
   :ensure t
   :config
@@ -129,10 +435,10 @@
   ;;(setq clang-format-fallback-style "Google")
   )
 
-;; (add-hook 'c-ts-mode-hook
+;; (add-hook 'c-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
-;; (add-hook 'c++-ts-mode-hook
+;; (add-hook 'c++-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
 
@@ -204,21 +510,23 @@
   :config
   (progn
 
-    (setq treemacs-follow-after-init          nil
+    (setq treemacs-follow-after-init          t
+          treemacs-recenter-after-file-follow nil
+          treemacs-recenter-after-tag-follow  nil
           treemacs-width                      35
           treemacs-indentation                2
           treemacs-git-integration            t
           treemacs-collapse-dirs              3
           treemacs-silent-refresh             nil
-          treemacs-change-root-without-asking nil
           treemacs-sorting                    'alphabetic-asc
           treemacs-show-hidden-files          t
-          treemacs-never-persist              nil
           treemacs-is-never-other-window      nil
-          treemacs-goto-tag-strategy          'refetch-index)
+          treemacs-goto-tag-strategy          'refetch-index
+          treemacs-litter-directories         '("/.venv")
+          )
 
     (treemacs-resize-icons 22)
-    (treemacs-follow-mode nil)
+    (treemacs-follow-mode t)
     (treemacs-filewatch-mode t))
   :bind
 
@@ -331,19 +639,76 @@
 ;;(add-hook 'after-init-hook (lambda () (load-theme 'sanityinc-tomorrow-bright)))
 ;;(setq-default custom-enabled-themes '(sanityinc-tomorrow-bright))
 
-
 ;; add TODO highlighting
 (use-package hl-todo
-    :hook (prog-mode . hl-todo-mode)
-    :config
-    (setq hl-todo-highlight-punctuation ":"
-          hl-todo-keyword-faces
-          `(("TODO"       warning bold)
-            ("FIXME"      error bold)
-            ("HACK"       font-lock-constant-face bold)
-            ("REVIEW"     font-lock-keyword-face bold)
-            ("NOTE"       success bold)
-            ("DEPRECATED" font-lock-doc-face bold))))
+  :ensure t
+  :hook (prog-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-highlight-punctuation ":"
+        hl-todo-keyword-faces
+        `(("TODO"       warning bold)
+          ("FIXME"      error bold)
+          ("HACK"       font-lock-constant-face bold)
+          ("REVIEW"     font-lock-keyword-face bold)
+          ("NOTE"       success bold)
+          ("DEPRECATED" font-lock-doc-face bold))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; gptel
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(load "secrets.el" t t)
+
+;; chatgpt
+;; (use-package gptel
+;;   :ensure t
+;;   :config
+;;   ;; use gptel-api-key to set the API key
+;;   (setq gptel-api-key chatgpt-api-key)
+
+;;   (setq gptel-model 'gpt-3.5-turbo ;; gpt-4o-mini
+;;         gptel-temperature 0.7
+;;         gptel-max-tokens 1000
+;;         gptel-system-message "You are an Emacs expert assistant."
+;;         gptel-buffer-name "*GPT Assistant*")
+;;   )
+
+;; Gemini
+(use-package gptel
+  :ensure t
+  :config
+  (setq gptel-model 'gemini-1.5-flash
+        gptel-backend (gptel-make-gemini "Gemini"
+                        :key gemini-api-key
+                        :stream t)
+        gptel-default-mode 'org-mode
+        gptel-prompt-prefix-alist
+        '((markdown-mode . "# ")
+          (org-mode . "* ")
+          (text-mode . "# "))
+        gptel-directives
+        '((programming_tutor . "You are a careful professional programmer. Review the following code and provide concise suggestions to improve it.")
+          (programming_explainer . "You are a careful professional programmer. Review the following code and explain concisely how it works.")
+          (programming_describer . "You are a careful professional programmer. Review the following code and explain, line by line, how it works.")
+          (professional_python_dev . "You are a highly experienced Python developer and mentor specializing in modern Python practices. Write code that:
+1. Uses Python 3.10+ features (e.g., `match` statements, type hints, dataclasses).
+2. Follows PEP8 standards and Google's Python style guide, ensuring clean and readable code.
+3. Strives for high performance without sacrificing readability (e.g., use comprehensions, efficient libraries, lazy evaluation when appropriate).
+4. Uses type hints for all function signatures and variables wherever meaningful.
+5. Includes concise, professional docstrings with examples when necessary.
+6. Handles exceptions gracefully and incorporates robust error handling.
+7. Avoids redundant comments; use meaningful variable and function names.
+8. Utilizes modern libraries and tools such as `pathlib` for file handling, `functools` for decorators, and `dataclasses` or `attrs` for structured data.
+9. Uses expressive but not overly complex one-liners when they enhance clarity.
+10. Incorporates Pythonic idioms like unpacking, comprehensions, and context managers.
+11. Ensures compatibility and tests edge cases, if applicable.
+12. Highlights any trade-offs between readability and performance explicitly.
+13. Avoids using deprecated libraries or outdated patterns.
+14. Ensures modular design, with functions and classes that are logically separated and reusable.
+Respond with clear, professional, and idiomatic Python code that adheres to these principles.")
+          )
+        )
+  )
 
 
 

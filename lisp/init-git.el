@@ -42,7 +42,8 @@
 
 (maybe-require-package 'magit-todos)
 
-(add-hook 'git-commit-mode-hook 'goto-address-mode)
+;; (when (maybe-require-package 'git-commit)
+;;   (add-hook 'git-commit-mode-hook 'goto-address-mode))
 
 
 ;; Convenient binding for vc-git-grep
