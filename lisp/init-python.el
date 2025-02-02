@@ -28,7 +28,7 @@
   (add-to-list 'auto-mode-alist '("poetry\\.lock\\'" . toml-mode)))
 
 ;; every time you save your Python file yapf will be executed on the current buffer.
-(require-package 'py-yapf)
+;; (require-package 'py-yapf)
 ;; (add-hook 'python-mode-hook 'py-yapf-enable-on-save)
 
 ;; (when (maybe-require-package 'reformatter)
