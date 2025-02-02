@@ -11,8 +11,8 @@
   (maybe-require-package 'consult-eglot))
 
 ;; Configure eglot-flymake-backend for C++ files
-(with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '(c++-mode . ("clangd"))))
+;; (with-eval-after-load 'eglot
+;;   (add-to-list 'eglot-server-programs '(c++-mode . ("clangd"))))
 
 
 (provide 'init-eglot)
