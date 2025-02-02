@@ -36,7 +36,6 @@
 ;;          ("M-S-<right>" . buf-move-right))
 ;;   )
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -135,7 +134,7 @@
 (defun my/custom-python-env ()
   "Set custom shell and env for python (e.g. over Tramp with Conda).
 This removes the `poetry' and `pyvenv' dependencies for me."
-  (interactive)
+  ;; (interactive)
   (require 'tramp)
   (let* ((env (expand-file-name (read-directory-name "Python env: ")))
          (bin (concat (expand-file-name (tramp-file-local-name (file-name-as-directory env))) "bin"))
@@ -172,7 +171,7 @@ This removes the `poetry' and `pyvenv' dependencies for me."
   (if (not my/python-venv-mode)
       (my/reset-python-env)
     (my/custom-python-env)
-    (add-to-list 'mode-line-misc-info '(my/python-venv-mode (" V:" my/venv-name " ")))))
+    (add-to-list 'mode-line-misc-info '(my/python-venv-mode (" venv:" my/venv-name " ")))))
 
 ;; (defun my/activate-project-venv ()
 ;;   "Automatically activate a venv based on the project root."
@@ -214,18 +213,6 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;;   (set-face-foreground 'highlight-indent-guides-character-face "dimgray")
 ;;   (setq highlight-indent-guides-method 'character)
 ;;   (setq highlight-indent-guides-responsive 'top))
-
-
-;; (use-package dap-mode
-;;   :ensure t
-;;   :config
-;;   (dap-auto-configure-mode))
-
-;; (add-hook 'python-mode-hook
-;;           (lambda ()
-;;             (when (bound-and-true-p dap-mode)
-;;               (setq dap-python-executable
-;;                     (expand-file-name ".venv/bin/python" (projectile-project-root))))))
 
 (use-package dape
   :ensure t
@@ -270,89 +257,54 @@ This removes the `poetry' and `pyvenv' dependencies for me."
   ;; the following is taken from here:
   ;; https://codeberg.org/haditim/dotemacs/src/branch/master/modules/programming-languages/my-python.el
 
-
-  ;; (defun my/append-to-visible-buffer (&optional buffer-name)
-  ;;     "Interactively append selected region to a visible buffer.
-  ;; Useful for sending selection to debugger, shell, etc."
-  ;;     (interactive)
-  ;;     (let* ((beg (if (region-active-p)
-  ;;                     (save-excursion (region-beginning))
-  ;;                   (save-excursion (beginning-of-line) (point))))
-  ;;            (end (if (region-active-p)
-  ;;                     (save-excursion (region-end))
-  ;;                   (save-excursion (end-of-line) (point))))
-  ;;            (text (buffer-substring beg end))
-  ;;            (buf (current-buffer))
-  ;;            (target-buffer (if (not buffer-name)
-  ;;                               (completing-read "Select buffer to append to: "
-  ;;                                                (mapcar 'buffer-name (mapcar 'window-buffer (window-list))))
-  ;;                             buffer-name))
-  ;;            (inhibit-read-only t))
-  ;;       (switch-to-buffer target-buffer)
-  ;;       (goto-char (point-max))
-  ;;       (insert (concat "\n" text))
-  ;;       (if
-  ;;           (derived-mode-p 'comint-mode)
-  ;;           (comint-send-input)
-  ;;         (insert "\n"))
-  ;;       (switch-to-buffer buf)))
-
-
-  ;;   (defun my/send-to-dape-repl ()
-  ;;     (interactive)
-  ;;     (my/append-to-visible-buffer "*dape-repl*"))
-
-
-
   (setq dape-repl-use-shorthand t)
 
-  ;; (defun my/get-real-python-env-path ()
-  ;;   "Get real python env (Tramp and local) for dape"
-  ;;   (let ((env (if (boundp 'my/venv-address)
-  ;;                  my/venv-address
-  ;;                python-shell-virtualenv-root)))
-  ;;     (concat (file-name-as-directory env) "bin")))
+  (defun my/get-real-python-env-path ()
+    "Get real python env (Tramp and local) for dape"
+    (let ((env (if (boundp 'my/venv-address)
+                   my/venv-address
+                 python-shell-virtualenv-root)))
+      (concat (file-name-as-directory env) "bin")))
 
-  ;; (defun my/debug-over-forwarded-port ()
-  ;;   "Use dape over a forwarded port with command `ssh -L 1234:localhost:1234 <server-address>'"
-  ;;   (interactive)
-  ;;   (let* ((selected-port (read-number "Forwarded port: " 1234))
-  ;;          (selected-port-str (number-to-string selected-port)))
-  ;;     (add-to-list 'dape-configs
-  ;;                  `(debugpy-file-remote-forwarded-port
-  ;;                    modes (python-mode python-ts-mode)
-  ;;                    command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
-  ;;                    command "python"
-  ;;                    command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
-  ;;                    port ,selected-port
-  ;;                    host "localhost"
-  ;;                    :program dape-buffer-default
-  ;;                    :request "launch"
-  ;;                    :type "python"
-  ;;                    :console "externalTerminal"
-  ;;                    :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
-  ;;                    ))
-  ;;     (add-to-list 'dape-configs
-  ;;                  `(debugpy-module-remote-forwarded-port
-  ;;                    modes (python-mode python-ts-mode)
-  ;;                    command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
-  ;;                    command "python"
-  ;;                    command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
-  ;;                    port ,selected-port
-  ;;                    host "localhost"
-  ;;                    stderr (get-buffer-create "*dape adapter stderr*") ; Fix stderr here TODO
-  ;;                    :module nil
-  ;;                    :request "launch"
-  ;;                    :type "python"
-  ;;                    :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
-  ;;                    :console "externalTerminal"
-  ;;                    :unittestEnabled t
-  ;;                    ))
-  ;;     )
-  ;;   (dape (dape--read-config)))
+  (defun my/debug-over-forwarded-port ()
+    "Use dape over a forwarded port with command `ssh -L 1234:localhost:1234 <server-address>'"
+    (interactive)
+    (let* ((selected-port (read-number "Forwarded port: " 1234))
+           (selected-port-str (number-to-string selected-port)))
+      (add-to-list 'dape-configs
+                   `(debugpy-file-remote-forwarded-port
+                     modes (python-mode python-ts-mode)
+                     command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
+                     command "python"
+                     command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
+                     port ,selected-port
+                     host "localhost"
+                     :program dape-buffer-default
+                     :request "launch"
+                     :type "python"
+                     :console "internalTerminal"
+                     :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+                     ))
+      (add-to-list 'dape-configs
+                   `(debugpy-module-remote-forwarded-port
+                     modes (python-mode python-ts-mode)
+                     command-cwd my/get-real-python-env-path ; to respect the env I/pyvenv activated
+                     command "python"
+                     command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" ,selected-port-str)
+                     port ,selected-port
+                     host "localhost"
+                     :module nil
+                     :request "launch"
+                     :type "python"
+                     :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+                     :console "internalTerminal"
+                     :unittestEnabled t
+                     ))
+      )
+    (dape (dape--read-config)))
 
   (add-to-list `dape-configs
-               '(debugpy-remote
+               '(debugpy-file-remote
                  modes (python-mode python-ts-mode)
                  command "python"
                  command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" :autoport)
@@ -364,24 +316,6 @@ This removes the `poetry' and `pyvenv' dependencies for me."
                  :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
                  :console "integratedTerminal"
                  ))
-
-  (add-to-list `dape-configs
-               '(debugpy-remote-5678
-                 modes (python-mode python-ts-mode)
-                 command "python"
-                 command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" "5678")
-                 port 5678
-                 :program dape-buffer-default
-                 :request "launch"
-                 :type "python"
-                 :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
-                 :console "integratedTerminal"
-                 ;;prefix-local "/docker:dads-playground:/repo/"
-                 ;;prefix-remote "/repo/"
-                 ))
-
-
-
   )
 
 ;; Enable repeat mode for more ergonomic `dape' use
@@ -477,30 +411,6 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;;  (comment-region beg end -1));
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; matlab-mode
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; add matlab syntax highlighting
-(autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
-(add-to-list 'auto-mode-alist '("\\.m$" . matlab-mode))
-(setq matlab-indent-function t)
-(setq matlab-shell-command "matlab")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; neotree or speedbar
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ;; Icons
-;; (require-package 'all-the-icons)
-;; ;; run this command: M-x all-the-icons-install-fonts
-
-;; (require-package 'neotree)
-;; (global-set-key [f8] 'neotree-toggle)
-;; (setq neo-theme 'ascii)
-;; (setq neo-window-width 35)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; treemacs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -534,7 +444,6 @@ This removes the `poetry' and `pyvenv' dependencies for me."
         ("M-0"       . treemacs-select-window)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t t"   . treemacs)
-        ([f8]        . treemacs)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
@@ -633,13 +542,9 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;;   (add-to-list 'flyspell-prog-text-faces 'nxml-text-face))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Fix to overwrite the 'use-package' theme in emacs26
-;; cf init-themes.el
+;;;; text highlights
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;(add-hook 'after-init-hook (lambda () (load-theme 'sanityinc-tomorrow-bright)))
-;;(setq-default custom-enabled-themes '(sanityinc-tomorrow-bright))
 
-;; add TODO highlighting
 (use-package hl-todo
   :ensure t
   :hook (prog-mode . hl-todo-mode)
