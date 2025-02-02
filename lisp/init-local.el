@@ -16,6 +16,9 @@
 ;; remove trailing whitespace from the entire buffer before saving the file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+(setq-default tab-width 4) ;; set the tab width
+(setq-default indent-tabs-mode nil)  ;; Use spaces instead of tabs for indentation
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; font scaling
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,14 +89,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; dont indent the braces
-;; (setq c-default-style "linux"
+;; (setq c-default-style "Linux"
 ;;       c-basic-offset 3)
+
+;; sets c-ts-mode and c++-ts-mode when using c-mode or c++-mode
+;; (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+;; (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
+;; (add-to-list 'major-mode-remap-alist
+;;              '(c-or-c++-mode . c-or-c++-ts-mode))
 
 ;; add cuda syntax highlighting
 (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.cuh\\'" . c++-mode))
 
-;; add regular c++ files for syntaxhiglighting
+;; add regular c++ files for syntax higlighting
 (add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.cpp\\'" . c++-mode))
@@ -104,22 +113,26 @@
 
 ;; clang-format
 ;; you need to first install clang-format using apt install
-(require 'clang-format)
-(global-set-key [C-M-tab] 'clang-format-region)
-;; (load "/usr/share/emacs/site-lisp/clang-format-10/clang-format.el")
-;; This will search for a .clang-format file in your project root folder.
-;; You can create a config file e.g. using the following command:
-;; clang-format -style=llvm -dump-config > .clang-format
-(setq clang-format-style "file")
-;; In case there is no config file clang should use the following fallback
-(setq clang-format-fallback-style "llvm")
-;;(setq clang-format-fallback-style "Google")
+(use-package clang-format
+  :ensure t
+  :config
+  ;; Set a global keybinding for formatting the entire buffer
+  (global-set-key [C-M-tab] 'clang-format-region)
 
+  ;; (load "/usr/share/emacs/site-lisp/clang-format-10/clang-format.el")
+  ;; This will search for a .clang-format file in your project root folder.
+  ;; You can create a config file e.g. using the following command:
+  ;; clang-format -style=llvm -dump-config > .clang-format
+  (setq clang-format-style "file")
+  ;; In case there is no config file clang should use the following fallback
+  (setq clang-format-fallback-style "llvm")
+  ;;(setq clang-format-fallback-style "Google")
+  )
 
-;; (add-hook 'c-mode-hook
+;; (add-hook 'c-ts-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
-;; (add-hook 'c++-mode-hook
+;; (add-hook 'c++-ts-mode-hook
 ;;           (lambda ()
 ;;             (add-hook 'before-save-hook 'clang-format-buffer nil 'make-it-local)))
 
@@ -191,7 +204,7 @@
   :config
   (progn
 
-    (setq treemacs-follow-after-init          t
+    (setq treemacs-follow-after-init          nil
           treemacs-width                      35
           treemacs-indentation                2
           treemacs-git-integration            t
@@ -205,7 +218,7 @@
           treemacs-goto-tag-strategy          'refetch-index)
 
     (treemacs-resize-icons 22)
-    (treemacs-follow-mode t)
+    (treemacs-follow-mode nil)
     (treemacs-filewatch-mode t))
   :bind
 
@@ -273,6 +286,9 @@
 
 ;; turn on flyspell in org mode
 (add-hook 'org-mode-hook 'turn-on-flyspell)
+
+;; Disable confirmation for code block evaluation in Org mode
+(setq org-confirm-babel-evaluate nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; all-the-icons
