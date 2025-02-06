@@ -19,13 +19,8 @@
 (setq-default tab-width 4) ;; set the tab width
 (setq-default indent-tabs-mode nil)  ;; Use spaces instead of tabs for indentation
 
-;; folding extension
-(use-package yafolding
-  :ensure t
-  :hook
-  (yaml-mode . yafolding-mode)
-  (yaml-ts-mode . yafolding-mode)
-  (prog-mode . yafolding-mode))
+;; don't hang when visiting files with extremely long lines
+(global-so-long-mode t)
 
 ;; TODO test later
 ;; (use-package buffer-move
@@ -63,7 +58,6 @@
       eldoc-echo-area-prefer-doc-buffer  t ; Prefer displaying doc in separate buffer
       eldoc-echo-area-use-multiline-p nil)  ; 1 line max to display in the echo area
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; yasnippet
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,6 +77,37 @@
 
 (use-package yasnippet-snippets
   :ensure t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; tramp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; taken from here: https://robbmann.io/emacsd/
+(use-package tramp
+  :defer t
+  :config
+  (setq vc-handled-backends '(Git)
+        file-name-inhibit-locks t
+        tramp-inline-compress-start-size 1000
+        tramp-copy-size-limit 10000
+        tramp-verbose 1)
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
+(setq tramp-use-ssh-controlmaster-options nil)
+
+;; add to ~/.ssh/config
+;; Host *
+;;   ControlMaster auto
+;;   ControlPath ~/.ssh/sockets/%C
+;;   ControlPersist 10m
+;;   ForwardAgent yes
+;;   ServerAliveInterval 60
+;;   Compression yes
+
+;; can maybe speed up tramp:
+;; (setq enable-remote-dir-locals t)
+;; (setq tramp-default-method "scp")
+;; (setq projectile--mode-line "Projectile")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; python-mode
@@ -282,7 +307,7 @@ This removes the `poetry' and `pyvenv' dependencies for me."
                      :program dape-buffer-default
                      :request "launch"
                      :type "python"
-                     :console "internalTerminal"
+                     :console "integratedTerminal"
                      :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
                      ))
       (add-to-list 'dape-configs
@@ -297,24 +322,72 @@ This removes the `poetry' and `pyvenv' dependencies for me."
                      :request "launch"
                      :type "python"
                      :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
-                     :console "internalTerminal"
+                     :console "integratedTerminal"
                      :unittestEnabled t
                      ))
       )
     (dape (dape--read-config)))
 
   (add-to-list `dape-configs
-               '(debugpy-file-remote
+               '(debugpy-program
                  modes (python-mode python-ts-mode)
                  command "python"
                  command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" :autoport)
                  port :autoport
-                 ;;command-insert-stderr nil
                  :program dape-buffer-default
                  :request "launch"
                  :type "python"
                  :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
                  :console "integratedTerminal"
+                 ))
+
+  ;; debug pytest
+  (add-to-list 'dape-configs
+               `(debugpy-pytest
+                 modes (python-mode python-ts-mode)
+                 command "python"
+                 command-args ("-m" "debugpy.adapter" "--host" "0.0.0.0" "--port" :autoport)
+                 port :autoport
+                 :module "pytest"
+                 :request "launch"
+                 :type "python"
+                 :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ; this should be `local' file name in remote
+                 :console "integratedTerminal"
+                 ;;:unittestEnabled t
+                 :args ["-s" "-v" "tests/unit_tests/data/dataset_layers/test_image_processing.py::test_tu002_layers"]
+                 :stopOnEntry t
+                 ))
+
+  ;; import debugpy
+  ;; debugpy.listen(('0.0.0.0', 5678))
+  ;; print("Waiting for debugger attach...")
+  ;; debugpy.wait_for_client()  # This will pause execution until the debugger attaches
+  (add-to-list 'dape-configs
+               '(debugpy-attach-localhost-5678
+                 modes (python-mode python-ts-mode)
+                 command "python"
+                 command-args ("-m" "debugpy.adapter")
+                 port 5678
+                 host "localhost"
+                 :request "attach"
+                 :type "python"
+                 :console "externalTerminal"
+                 :cwd (lambda () (tramp-file-local-name (file-name-as-directory (dape--default-cwd)))) ;; Ensure cwd is local in remote context
+                 ))
+
+  (add-to-list 'dape-configs
+               '(debugpy-attach-remote-local-code
+                 modes (python-mode python-ts-mode)
+                 command "python"
+                 command-args ("-m" "debugpy.adapter")
+                 port 5678
+                 host "192.168.86.21"
+                 :request "attach"
+                 :type "python"
+                 :console "externalTerminal"
+                 :cwd "/home/stefan/Playground/test/" ;; local project path
+                 prefix-local "/home/stefan/Playground/test/" ;; local project path
+                 prefix-remote "/home/floyd/Playground/test_debugpy/" ;; remote project path (needs to be rsynced with local)
                  ))
   )
 
