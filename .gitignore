@@ -58,8 +58,4 @@ site-lisp/package/
 /projects
 /forge-*.sqlite
 /projectile.cache
-
-# local secrets
-lisp/secrets.el
-.DS_Store
-dape-breakpoints
+/lisp/secrets.el
