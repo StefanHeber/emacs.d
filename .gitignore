@@ -59,3 +59,7 @@ site-lisp/package/
 /forge-*.sqlite
 /projectile.cache
 /lisp/secrets.el
+# macOS metadata files
+.DS_Store
+._*
+/dape-breakpoints
