@@ -1,5 +1,8 @@
 (require-package 'use-package)
 
+;; only show errors
+;; (setq warning-minimum-level :error)
+
 ;; (global-set-key "\C-l" 'goto-line) ;; M-g g
 
 ;; mouse-2 events by pressing Command when clicking with the trackpad.
@@ -110,6 +113,25 @@
 ;; (setq projectile--mode-line "Projectile")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; git
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (use-package blamer
+;;   :ensure t
+;;   :bind (("C-c i" . blamer-show-posframe-commit-info))
+;;   :defer 20
+;;   :custom
+;;   (blamer-idle-time 0.3)
+;;   (blamer-min-offset 70)
+;;   :custom-face
+;;   ;; (blamer-face ((t :foreground "#7a88cf"
+;;   ;;                  :background nil
+;;   ;;                  :height 140
+;;   ;;                  :italic t)))
+;;   :config
+;;   (global-blamer-mode 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; python-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -198,6 +220,17 @@ This removes the `poetry' and `pyvenv' dependencies for me."
     (my/custom-python-env)
     (add-to-list 'mode-line-misc-info '(my/python-venv-mode (" venv:" my/venv-name " ")))))
 
+
+(use-package python
+  :config
+  (require 'eglot)
+  (setq python-check-command "ruff")
+  (add-hook 'python-mode-hook #'flymake-mode)
+  (add-hook 'python-ts-mode-hook #'flymake-mode)
+  ;; (add-to-list 'eglot-server-programs '((python-mode python-ts-mode) "ruff-lsp"))
+  )
+
+
 ;; (defun my/activate-project-venv ()
 ;;   "Automatically activate a venv based on the project root."
 ;;   (when (eq major-mode 'python-mode) ; Only do this for Python files
@@ -239,6 +272,10 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;;   (setq highlight-indent-guides-method 'character)
 ;;   (setq highlight-indent-guides-responsive 'top))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; dape
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package dape
   :ensure t
   :preface
@@ -278,7 +315,7 @@ This removes the `poetry' and `pyvenv' dependencies for me."
   ;; Projectile users
   (setq dape-cwd-fn 'projectile-project-root)
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; the following is taken from here:
   ;; https://codeberg.org/haditim/dotemacs/src/branch/master/modules/programming-languages/my-python.el
 
@@ -580,6 +617,12 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;; Disable confirmation for code block evaluation in Org mode
 (setq org-confirm-babel-evaluate nil)
 
+;; switch on org-indent-mode
+(setq org-startup-indented t)
+
+;; ;; dont change cursor position when opening a section
+;; (setq org-cycle-keep-subtree-position t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; all-the-icons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -652,23 +695,84 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 ;;   )
 
 ;; Gemini
+;; (use-package gptel
+;;   :ensure t
+;;   :config
+;;   (setq gptel-model 'gemini-1.5-flash
+;;         gptel-backend (gptel-make-gemini "Gemini"
+;;                         :key gemini-api-key
+;;                         :stream t)
+;;         gptel-default-mode 'org-mode
+;;         gptel-prompt-prefix-alist
+;;         '((markdown-mode . "# ")
+;;           (org-mode . "* ")
+;;           (text-mode . "# "))
+;;         gptel-directives
+;;         '((programming_tutor . "You are a careful professional programmer. Review the following code and provide concise suggestions to improve it.")
+;;           (programming_explainer . "You are a careful professional programmer. Review the following code and explain concisely how it works.")
+;;           (programming_describer . "You are a careful professional programmer. Review the following code and explain, line by line, how it works.")
+;;           (professional_python_dev . "You are a highly experienced Python developer and mentor specializing in modern Python practices. Write code that:
+;; 1. Uses Python 3.10+ features (e.g., `match` statements, type hints, dataclasses).
+;; 2. Follows PEP8 standards and Google's Python style guide, ensuring clean and readable code.
+;; 3. Strives for high performance without sacrificing readability (e.g., use comprehensions, efficient libraries, lazy evaluation when appropriate).
+;; 4. Uses type hints for all function signatures and variables wherever meaningful.
+;; 5. Includes concise, professional docstrings with examples when necessary.
+;; 6. Handles exceptions gracefully and incorporates robust error handling.
+;; 7. Avoids redundant comments; use meaningful variable and function names.
+;; 8. Utilizes modern libraries and tools such as `pathlib` for file handling, `functools` for decorators, and `dataclasses` or `attrs` for structured data.
+;; 9. Uses expressive but not overly complex one-liners when they enhance clarity.
+;; 10. Incorporates Pythonic idioms like unpacking, comprehensions, and context managers.
+;; 11. Ensures compatibility and tests edge cases, if applicable.
+;; 12. Highlights any trade-offs between readability and performance explicitly.
+;; 13. Avoids using deprecated libraries or outdated patterns.
+;; 14. Ensures modular design, with functions and classes that are logically separated and reusable.
+;; Respond with clear, professional, and idiomatic Python code that adheres to these principles.")
+;;           )
+;;         )
+;;   )
+
+
+;; 1 MB read buffer (default is often 4k/64k; too small for streaming)
+(setq read-process-output-max (* 1024 1024))
+
+;; ChatGPT (OpenAI)
 (use-package gptel
   :ensure t
   :config
-  (setq gptel-model 'gemini-1.5-flash
-        gptel-backend (gptel-make-gemini "Gemini"
-                        :key gemini-api-key
-                        :stream t)
+  ;; Backend: OpenAI (ChatGPT)
+  ;; If you prefer auth-source/env: replace :key chatgpt-api-key with:
+  ;; :key (or (getenv "OPENAI_API_KEY")
+  ;;          (auth-source-pick-first-password :host "api.openai.com"))
+  (setq gptel-backend
+        (gptel-make-openai "ChatGPT"
+          :key   chatgpt-api-key
+          :host  "api.openai.com"
+          ;; :endpoint "/v1/responses"
+          :stream t
+          ;; List multiple models so you can M-x gptel-set-model to switch
+          :models '("gpt-5-pro" "gpt-5" "gpt-5-mini"))) ;; gpt-5-pro doesn't work
+
+  ;; Default model & behavior
+  (setq gptel-model "gpt-5"
+        gptel-temperature 0.7
+        gptel-max-tokens 4000
         gptel-default-mode 'org-mode
+        gptel-system-message "You are an Emacs expert assistant."
         gptel-prompt-prefix-alist
         '((markdown-mode . "# ")
           (org-mode . "* ")
           (text-mode . "# "))
+
+        ;; Keep your directives
         gptel-directives
-        '((programming_tutor . "You are a careful professional programmer. Review the following code and provide concise suggestions to improve it.")
-          (programming_explainer . "You are a careful professional programmer. Review the following code and explain concisely how it works.")
-          (programming_describer . "You are a careful professional programmer. Review the following code and explain, line by line, how it works.")
-          (professional_python_dev . "You are a highly experienced Python developer and mentor specializing in modern Python practices. Write code that:
+        '((programming_tutor
+           . "You are a careful professional programmer. Review the following code and provide concise suggestions to improve it.")
+          (programming_explainer
+           . "You are a careful professional programmer. Review the following code and explain concisely how it works.")
+          (programming_describer
+           . "You are a careful professional programmer. Review the following code and explain, line by line, how it works.")
+          (professional_python_dev
+           . "You are a highly experienced Python developer and mentor specializing in modern Python practices. Write code that:
 1. Uses Python 3.10+ features (e.g., `match` statements, type hints, dataclasses).
 2. Follows PEP8 standards and Google's Python style guide, ensuring clean and readable code.
 3. Strives for high performance without sacrificing readability (e.g., use comprehensions, efficient libraries, lazy evaluation when appropriate).
@@ -683,10 +787,8 @@ This removes the `poetry' and `pyvenv' dependencies for me."
 12. Highlights any trade-offs between readability and performance explicitly.
 13. Avoids using deprecated libraries or outdated patterns.
 14. Ensures modular design, with functions and classes that are logically separated and reusable.
-Respond with clear, professional, and idiomatic Python code that adheres to these principles.")
-          )
-        )
-  )
+Respond with clear, professional, and idiomatic Python code that adheres to these principles."))))
+
 
 
 
